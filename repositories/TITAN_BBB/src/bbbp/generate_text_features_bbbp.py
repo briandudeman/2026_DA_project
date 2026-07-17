@@ -1,0 +1,71 @@
+from transformers import AutoModel, AutoTokenizer
+import torch
+import os
+import pandas as pd
+import numpy as np
+from tqdm import tqdm
+import click
+
+VALID_TASKS = ['classification', 'regression']
+
+@click.command()
+@click.option(
+  '--task',
+  type=click.Choice(VALID_TASKS, case_sensitive=False),
+  required=True,
+  help="The task"
+)
+
+def main(task: str):
+  script_dir = os.path.dirname(os.path.abspath(__file__))
+  root_dir = os.path.abspath(os.path.join(script_dir, '../../../../'))
+
+  bbbp_image_dir = os.path.join(root_dir, 'ImageMol/datasets/finetuning/classification/BBBP/processed/224')
+  bbbp_csv_path = os.path.join(root_dir, 'ImageMol/datasets/finetuning/classification/BBBP/processed/bbbp_processed_ac.csv')
+
+
+  bbbp = pd.read_csv(bbbp_csv_path)
+  
+  model_path = 'DeepChem/ChemBERTa-100M-MLM'
+
+  device = torch.device("cpu")
+
+  tokenizer = AutoTokenizer.from_pretrained(model_path)
+  model = AutoModel.from_pretrained(model_path, output_hidden_states=True).to(device)
+
+  model.eval()
+
+  process_data(bbbp, tokenizer, model, device, "bbbp", task, root_dir)
+
+def masked_mean_pooling(last_hidden_state, attention_mask):
+  mask = attention_mask.unsqueeze(-1).float()
+  masked = last_hidden_state * mask
+  summed = masked.sum(dim=1)
+  counts = mask.sum(dim=1).clamp(min=1e-9)
+  return summed / counts
+
+def process_data(df, tokenizer, model, device, set_name, task, root_dir, batch_size=64):
+  n = len(df)
+  out = np.zeros((n, 768))
+
+  smiles_list = df.smiles.values.tolist()
+
+  for start in tqdm(range(0, n, batch_size)):
+    end = min(start + batch_size, n)
+    batch_smiles = smiles_list[start:end]
+
+    tok = tokenizer(batch_smiles, padding=True, truncation=True, max_length=512, return_tensors="pt")
+    input_ids = tok["input_ids"].to(device)
+    attention_mask = tok["attention_mask"].to(device)
+
+    with torch.no_grad():
+      outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+
+    last_hidden = outputs.hidden_states[-1]
+    pooled = masked_mean_pooling(last_hidden, attention_mask)
+    out[start:end] = pooled.cpu().numpy()
+
+  np.save(os.path.join(root_dir, f'repositories/TITAN_BBB/features/{set_name}-text-{task}.npy'), out)
+
+if __name__ == '__main__':
+  main()
