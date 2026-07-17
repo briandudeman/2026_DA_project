@@ -1,0 +1,6 @@
+requirements.txt
+commands.txt
+*.cfg
+*.yml
+.vscode/
+__pycache__/
