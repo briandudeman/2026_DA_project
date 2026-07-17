@@ -16,6 +16,8 @@ __pycache__/
 *.pth
 *.npy
 
+!figures/*
+
 bin/
 include/
 lib/

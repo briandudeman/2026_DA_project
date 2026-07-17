@@ -18,10 +18,10 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.abspath(os.path.join(script_dir, '../'))
 sys.path.insert(0, root_dir)
 
-from repositories.TitanBBB.TITAN_BBB.src.utils.model import SMILESModel
-from repositories.TitanBBB.TITAN_BBB.src.utils.dataset import load_and_process_feature, SMILESDataset
-from repositories.TitanBBB.TITAN_BBB.src.bbbp.gather_image_features_bbbp import process_data as process_image_data, get_resnet50_encoder
-from repositories.TitanBBB.TITAN_BBB.src.bbbp.generate_text_features_bbbp import process_data as process_text_data
+from repositories.TITAN_BBB.src.utils.model import SMILESModel
+from repositories.TITAN_BBB.src.utils.dataset import load_and_process_feature, SMILESDataset
+from repositories.TITAN_BBB.src.bbbp.gather_image_features_bbbp import process_data as process_image_data, get_resnet50_encoder
+from repositories.TITAN_BBB.src.bbbp.generate_text_features_bbbp import process_data as process_text_data
 
 from repositories.ImageMol.utils.public_utils import setup_device
 from repositories.ImageMol.dataloader.image_dataloader import get_datasets, load_filenames_and_labels_multitask, ImageDataset
@@ -69,7 +69,7 @@ def parse_args():
 
     return parser.parse_args()
 
-# will need to be changed based on the dataset, the order and names of df columns are for BBBP currently
+# label_name refers to the name of whatever column in the dataset corresponds to the label, smiles_name and index_name are similar
 def imol_process_dataset(data_root:str, dataset:str, label_name: str, smiles_name: str, index_name = None):
 
 
@@ -334,7 +334,7 @@ def titanbbb_process_bbbp_data(args, data_root:str, dataset:str):
 
     combined = np.concatenate([desc_2d, desc_maccs], axis=1)
 
-    np.save(os.path.join(root_dir, f'repositories/TitanBBB/TITAN_BBB/features/{args.titanbbb_set_name}-tabular-{args.task_type}.npy'), combined)
+    np.save(os.path.join(root_dir, f'repositories/TITAN_BBB/features/{args.titanbbb_set_name}-tabular-{args.task_type}.npy'), combined)
 
     #============================================================================================
 
@@ -426,7 +426,6 @@ def main(args):
     imol_f1 = imol_test_results["F1"]
     imol_precision = imol_test_results["PRECISION"]
     imol_recall = imol_test_results["RECALL"]
-    print("imol before recall", imol_recall)
     imol_precision_c, imol_recall_c, imol_thresholds = imol_test_results["PR_CURVE"]
     imol_pr_auc = imol_test_results["PR_AUC"]
     imol_specificity = imol_test_results["SPEC"]
@@ -434,7 +433,6 @@ def main(args):
     imol_mae = imol_test_results["MAE"]
     imol_rmse = imol_test_results["RMSE"]
 
-    print("imol test ", imol_test_result)
     
     if args.process_data:
         titanbbb_process_bbbp_data(args, os.path.join(root_dir, args.data_root), args.dataset)
@@ -459,11 +457,6 @@ def main(args):
     tb_mae = tb_test_results["MAE"]
     tb_rmse = tb_test_results["RMSE"]
 
-
-    print("[tb test] {}: {:.1f}%".format("rocauc", tb_test_result * 100))
-
-    print("[imol test] {}: {:.1f}%".format(imol_eval_metric, imol_test_result * 100))
-
     plt.figure(1, figsize=(8, 6), dpi=300)
 
     plt.suptitle("ROC Curve")
@@ -487,7 +480,7 @@ def main(args):
     print("tb_rmse", tb_rmse)
     plt.legend()
 
-    plt.savefig(args.fig_name + ".png", dpi=400)
+    plt.savefig(os.path.join("figures/", args.fig_name, "_roc_curve.png"), dpi=400)
 
     plt.figure(2, figsize=(8,6))
     plt.suptitle("Precision-Recall/Sensitivity Curve")
@@ -512,7 +505,7 @@ def main(args):
     
 
     plt.legend()
-    plt.savefig(args.fig_name + "1.png", dpi=400)
+    plt.savefig(os.path.join("figures/", args.fig_name, "_pr_curve.png"), dpi=400)
     plt.show()
 
 

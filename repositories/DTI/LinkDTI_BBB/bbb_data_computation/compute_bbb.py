@@ -10,11 +10,11 @@ from sklearn.metrics import balanced_accuracy_score, mean_absolute_error
 import warnings 
 warnings.filterwarnings("ignore", category=FutureWarning, module="torch")
 
-from TitanBBB.TITAN_BBB.src.utils.model import SMILESModel
-from TitanBBB.TITAN_BBB.src.utils.trainer import Trainer, EarlyStopping
-from TitanBBB.TITAN_BBB.src.utils.dataset import SMILESDataset, linkdti_data_load_and_process_feature
-from TitanBBB.TITAN_BBB.src.utils.utils import set_seed
-from TitanBBB.TITAN_BBB.src.utils.evaluate import evaluate_predictions
+from TITAN_BBB.src.utils.model import SMILESModel
+from TITAN_BBB.src.utils.trainer import Trainer, EarlyStopping
+from TITAN_BBB.src.utils.dataset import SMILESDataset, linkdti_data_load_and_process_feature
+from TITAN_BBB.src.utils.utils import set_seed
+from TITAN_BBB.src.utils.evaluate import evaluate_predictions
 
 BASE_FEATURES_PATH = '/Users/lewconb/2026 Project/LinkDTI_BBB/linkdti_bbb_data/features/{}-{}-{}.npy'
 VALID_TASKS = ['classification', 'regression']
@@ -40,7 +40,7 @@ def main(task):
     proj_dim = 2048
     dropout = 0.3
 
-  model_path = f'/Users/lewconb/2026 Project/TitanBBB/TITAN_BBB/models/model_{task}.pth'
+  model_path = f'/Users/lewconb/2026 Project/TITAN_BBB/models/model_{task}.pth'
 
   linkdti_data_tabular_features = linkdti_data_load_and_process_feature(BASE_FEATURES_PATH, 'tabular', task)
   linkdti_data_image_features = linkdti_data_load_and_process_feature(BASE_FEATURES_PATH, 'image', task)
